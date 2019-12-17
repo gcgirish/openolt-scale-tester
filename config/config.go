@@ -25,12 +25,12 @@ import (
 
 // Open OLT default constants
 const (
-	defaultOpenOltAgentIp            = "10.90.0.114"
-	defaultOpenOltAgentPort          = 9191
-	defaultNumOfOnu   				 = 128
-	defaultNumOfSubscribersPerOnu    = 1
-	defaultWorkFlowName  			 = "ATT"
-	defaultTimeIntervalBetweenSubs   = 5 // in seconds
+	defaultOpenOltAgentIp          = "10.90.0.114"
+	defaultOpenOltAgentPort        = 9191
+	defaultNumOfOnu                = 128
+	defaultNumOfSubscribersPerOnu  = 1
+	defaultWorkFlowName            = "ATT"
+	defaultTimeIntervalBetweenSubs = 5 // in seconds
 )
 
 // OpenOltScaleTesterConfigConfig represents the set of configurations used by the read-write adaptercore service
@@ -52,12 +52,11 @@ func init() {
 // NewOpenOltScaleTesterConfig returns a new RWCore config
 func NewOpenOltScaleTesterConfig() *OpenOltScaleTesterConfig {
 	var OpenOltScaleTesterConfig = OpenOltScaleTesterConfig{ // Default values
-		OpenOltAgentAddress:        defaultOpenOltAgentIp + ":" + strconv.Itoa(defaultOpenOltAgentPort),
-		NumOfOnu:   				defaultNumOfOnu,
-		SubscribersPerOnu:   		defaultNumOfSubscribersPerOnu,
-		WorkflowName:  			    defaultWorkFlowName,
-		TimeIntervalBetweenSubs:    defaultTimeIntervalBetweenSubs,
-
+		OpenOltAgentAddress:     defaultOpenOltAgentIp + ":" + strconv.Itoa(defaultOpenOltAgentPort),
+		NumOfOnu:                defaultNumOfOnu,
+		SubscribersPerOnu:       defaultNumOfSubscribersPerOnu,
+		WorkflowName:            defaultWorkFlowName,
+		TimeIntervalBetweenSubs: defaultTimeIntervalBetweenSubs,
 	}
 	return &OpenOltScaleTesterConfig
 }
