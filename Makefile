@@ -13,3 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+openolt-scale-tester:
+	go build .
+
+clean:
+	rm openolt-scale-tester
