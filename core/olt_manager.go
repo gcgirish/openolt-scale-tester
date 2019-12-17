@@ -36,11 +36,11 @@ type OnuDeviceKey struct {
 
 type OpenOltManager struct {
 	ipPort        string
-	deviceInfo        *oop.DeviceInfo
+	deviceInfo    *oop.DeviceInfo
 	onuDeviceMap  map[OnuDeviceKey]*OnuDevice
 	clientConn    *grpc.ClientConn
 	openOltClient oop.OpenoltClient
-	testConfig 	  *config.OpenOltScaleTesterConfig
+	testConfig    *config.OpenOltScaleTesterConfig
 }
 
 func init() {
@@ -106,8 +106,8 @@ func (om *OpenOltManager) provisionONUs() {
 	numOfONUsPerPon = om.testConfig.NumOfOnu / uint(om.deviceInfo.PonPorts)
 	oddONUs := om.testConfig.NumOfOnu % uint(om.deviceInfo.PonPorts)
 	log.Warnw("Odd number ONUs left out of provisioning", log.Fields{"oddONUs": oddONUs})
-	for i:=0 ; i < int(om.deviceInfo.PonPorts); i++ {
-		for j:=0; j<int(numOfONUsPerPon); j++ {
+	for i := 0; i < int(om.deviceInfo.PonPorts); i++ {
+		for j := 0; j < int(numOfONUsPerPon); j++ {
 			// TODO: More work with ONU provisioning
 			log.Debugw("provisioning onu", log.Fields{"onuID": j, "ponPort": i})
 
