@@ -21,10 +21,9 @@ import (
 	"encoding/hex"
 	"errors"
 	backoff "github.com/cenkalti/backoff/v3"
-
+	"github.com/opencord/openolt-scale-tester/config"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
-	"github.com/opencord/voltha-protos/v2/go/voltha"
 	"google.golang.org/grpc"
 	"io"
 	"time"
@@ -37,10 +36,11 @@ type OnuDeviceKey struct {
 
 type OpenOltManager struct {
 	ipPort        string
-	device        *voltha.Device
+	deviceInfo        *oop.DeviceInfo
 	onuDeviceMap  map[OnuDeviceKey]*OnuDevice
 	clientConn    *grpc.ClientConn
 	openOltClient oop.OpenoltClient
+	testConfig 	  config.OpenOltScaleTester
 }
 
 func init() {
@@ -55,8 +55,10 @@ func NewOpenOltManager(ipPort string) *OpenOltManager {
 	}
 }
 
-func (om *OpenOltManager) Start() error {
+func (om *OpenOltManager) Start(testConfig config.OpenOltScaleTester) error {
 	var err error
+	om.testConfig = testConfig
+
 	// Establish gRPC connection with the device
 	if om.clientConn, err = grpc.Dial(om.ipPort, grpc.WithInsecure(), grpc.WithBlock()); err != nil {
 		log.Errorw("Failed to dial device", log.Fields{"ipPort": om.ipPort, "err": err})
@@ -73,6 +75,8 @@ func (om *OpenOltManager) Start() error {
 	// Start reading indications
 	go om.readIndications()
 
+	go om.provisionONUs()
+
 	return nil
 
 }
@@ -81,28 +85,34 @@ func (om *OpenOltManager) Start() error {
 
 func (om *OpenOltManager) populateDeviceInfo() (*oop.DeviceInfo, error) {
 	var err error
-	var deviceInfo *oop.DeviceInfo
 
-	if deviceInfo, err = om.openOltClient.GetDeviceInfo(context.Background(), new(oop.Empty)); err != nil {
+	if om.deviceInfo, err = om.openOltClient.GetDeviceInfo(context.Background(), new(oop.Empty)); err != nil {
 		log.Errorw("Failed to fetch device info", log.Fields{"err": err})
 		return nil, err
 	}
 
-	if deviceInfo == nil {
+	if om.deviceInfo == nil {
 		log.Errorw("Device info is nil", log.Fields{})
 		return nil, errors.New("failed to get device info from OLT")
 	}
 
-	log.Debugw("Fetched device info", log.Fields{"deviceInfo": deviceInfo})
-	om.device = &voltha.Device{}
-	om.device.Root = true
-	om.device.Vendor = deviceInfo.Vendor
-	om.device.Model = deviceInfo.Model
-	om.device.SerialNumber = deviceInfo.DeviceSerialNumber
-	om.device.HardwareVersion = deviceInfo.HardwareVersion
-	om.device.FirmwareVersion = deviceInfo.FirmwareVersion
+	log.Debugw("Fetched device info", log.Fields{"deviceInfo": om.deviceInfo})
 
-	return deviceInfo, nil
+	return om.deviceInfo, nil
+}
+
+func (om *OpenOltManager) provisionONUs() {
+	var numOfONUsPerPon uint32
+	numOfONUsPerPon = om.testConfig.NumOfOnu / om.deviceInfo.PonPorts
+	oddONUs := om.testConfig.NumOfOnu % om.deviceInfo.PonPorts
+	log.Warnw("Odd number ONUs left out of provisioning", log.Fields{"oddONUs": oddONUs})
+	for i:=0 ; i < int(om.deviceInfo.PonPorts); i++ {
+		for j:=0; j<int(numOfONUsPerPon); j++ {
+			// TODO: More work with ONU provisioning
+			log.Debugw("provisioning onu", log.Fields{"onuID": j, "ponPort": i})
+
+		}
+	}
 }
 
 // readIndications to read the indications from the OLT device

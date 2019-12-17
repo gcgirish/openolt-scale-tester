@@ -98,7 +98,7 @@ func main() {
 
 	log.Infow("config", log.Fields{"config": *cf})
 
-	go cf.OpenOltManager.Start()
+	go cf.OpenOltManager.Start(cf)
 
 	code := waitForExit()
 	log.Infow("received-a-closing-signal", log.Fields{"code": code})

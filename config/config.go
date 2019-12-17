@@ -39,11 +39,11 @@ type OpenOltScaleTester struct {
 	// Command line parameters
 	OpenOltAgentAddress 	string
 	OpenOltAgentIP			string
-	OpenOltAgentPort        int
-	NumOfOnu	        	int
-	SubscribersPerOnu   	int
+	OpenOltAgentPort        uint32
+	NumOfOnu	        	uint32
+	SubscribersPerOnu   	uint32
 	WorkflowName   			string
-	TimeIntervalBetweenSubs int // in seconds
+	TimeIntervalBetweenSubs uint32 // in seconds
 	OpenOltManager          *core.OpenOltManager
 }
 
