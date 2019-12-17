@@ -14,10 +14,9 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
-github.com/golang/protobuf/ptypes/any
-github.com/golang/protobuf/ptypes/empty
-github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/protoc-gen-go/descriptor
+github.com/golang/protobuf/ptypes
+github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/uuid v1.1.1
@@ -45,12 +44,8 @@ github.com/opencord/voltha-lib-go/v2/pkg/db
 github.com/opencord/voltha-lib-go/v2/pkg/db/kvstore
 github.com/opencord/voltha-lib-go/v2/pkg/techprofile
 # github.com/opencord/voltha-protos/v2 v2.1.0
-github.com/opencord/voltha-protos/v2/go/openflow_13
 github.com/opencord/voltha-protos/v2/go/openolt
-github.com/opencord/voltha-protos/v2/go/voltha
-github.com/opencord/voltha-protos/v2/go/common
 github.com/opencord/voltha-protos/v2/go/tech_profile
-github.com/opencord/voltha-protos/v2/go/omci
 # go.etcd.io/etcd v0.0.0-20190930204107-236ac2a90522
 go.etcd.io/etcd/clientv3
 go.etcd.io/etcd/clientv3/concurrency
@@ -102,10 +97,9 @@ google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.24.0
 google.golang.org/grpc
-google.golang.org/grpc/codes
-google.golang.org/grpc/status
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/roundrobin
+google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
 google.golang.org/grpc/encoding
@@ -129,6 +123,7 @@ google.golang.org/grpc/resolver/dns
 google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
+google.golang.org/grpc/status
 google.golang.org/grpc/tap
 google.golang.org/grpc/balancer/base
 google.golang.org/grpc/credentials/internal

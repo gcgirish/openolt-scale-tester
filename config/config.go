@@ -19,7 +19,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/opencord/openolt-scale-tester/core"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	"strconv"
 )
@@ -34,26 +33,25 @@ const (
 	defaultTimeIntervalBetweenSubs   = 5 // in seconds
 )
 
-// OpenOltScaleTester represents the set of configurations used by the read-write adaptercore service
-type OpenOltScaleTester struct {
+// OpenOltScaleTesterConfigConfig represents the set of configurations used by the read-write adaptercore service
+type OpenOltScaleTesterConfig struct {
 	// Command line parameters
-	OpenOltAgentAddress 	string
-	OpenOltAgentIP			string
-	OpenOltAgentPort        uint32
-	NumOfOnu	        	uint32
-	SubscribersPerOnu   	uint32
-	WorkflowName   			string
-	TimeIntervalBetweenSubs uint32 // in seconds
-	OpenOltManager          *core.OpenOltManager
+	OpenOltAgentAddress     string
+	OpenOltAgentIP          string
+	OpenOltAgentPort        uint
+	NumOfOnu                uint
+	SubscribersPerOnu       uint
+	WorkflowName            string
+	TimeIntervalBetweenSubs uint // in seconds
 }
 
 func init() {
 	_, _ = log.AddPackage(log.JSON, log.WarnLevel, nil)
 }
 
-// NewOpenOltScaleTester returns a new RWCore config
-func NewOpenOltScaleTester() *OpenOltScaleTester {
-	var OpenOltScaleTester = OpenOltScaleTester{ // Default values
+// NewOpenOltScaleTesterConfig returns a new RWCore config
+func NewOpenOltScaleTesterConfig() *OpenOltScaleTesterConfig {
+	var OpenOltScaleTesterConfig = OpenOltScaleTesterConfig{ // Default values
 		OpenOltAgentAddress:        defaultOpenOltAgentIp + ":" + strconv.Itoa(defaultOpenOltAgentPort),
 		NumOfOnu:   				defaultNumOfOnu,
 		SubscribersPerOnu:   		defaultNumOfSubscribersPerOnu,
@@ -61,29 +59,29 @@ func NewOpenOltScaleTester() *OpenOltScaleTester {
 		TimeIntervalBetweenSubs:    defaultTimeIntervalBetweenSubs,
 
 	}
-	return &OpenOltScaleTester
+	return &OpenOltScaleTesterConfig
 }
 
 // ParseCommandArguments parses the arguments for OpenOltScale Tester
-func (st *OpenOltScaleTester) ParseCommandArguments() {
+func (st *OpenOltScaleTesterConfig) ParseCommandArguments() {
 
 	help := fmt.Sprintf("OpenOLT Agent IP Address")
 	flag.StringVar(&(st.OpenOltAgentIP), "openolt_agent_ip_address", defaultOpenOltAgentIp, help)
 
 	help = fmt.Sprintf("OpenOLT Agent gRPC port")
-	flag.IntVar(&(st.OpenOltAgentPort), "openolt_agent_port", defaultOpenOltAgentPort, help)
+	flag.UintVar(&(st.OpenOltAgentPort), "openolt_agent_port", defaultOpenOltAgentPort, help)
 
 	help = fmt.Sprintf("Number of ONU")
-	flag.IntVar(&(st.NumOfOnu), "num_of_onu", defaultNumOfOnu, help)
+	flag.UintVar(&(st.NumOfOnu), "num_of_onu", defaultNumOfOnu, help)
 
 	help = fmt.Sprintf("Kafka - Cluster messaging port")
-	flag.IntVar(&(st.SubscribersPerOnu), "subscribers_per_onu", defaultNumOfSubscribersPerOnu, help)
+	flag.UintVar(&(st.SubscribersPerOnu), "subscribers_per_onu", defaultNumOfSubscribersPerOnu, help)
 
 	help = fmt.Sprintf("Workflow name")
 	flag.StringVar(&(st.WorkflowName), "workflow_name", defaultWorkFlowName, help)
 
 	help = fmt.Sprintf("Time Interval Between provisioning each subscriber")
-	flag.IntVar(&(st.TimeIntervalBetweenSubs), "time_interval_between_subs", defaultTimeIntervalBetweenSubs, help)
+	flag.UintVar(&(st.TimeIntervalBetweenSubs), "time_interval_between_subs", defaultTimeIntervalBetweenSubs, help)
 
 	flag.Parse()
 

@@ -40,6 +40,10 @@ const (
 	DefaultTimeout = 10
 )
 
+type OpenOltScaleTester struct {
+	openOltManager *core.OpenOltManager
+}
+
 func waitForExit() int {
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel,
@@ -75,10 +79,10 @@ func printBanner() {
 
 func main() {
 	start := time.Now()
-
-	cf := config.NewOpenOltScaleTester()
+	sc := OpenOltScaleTester{}
+	cf := config.NewOpenOltScaleTesterConfig()
 	cf.ParseCommandArguments()
-	cf.OpenOltManager = core.NewOpenOltManager(cf.OpenOltAgentAddress)
+	sc.openOltManager = core.NewOpenOltManager(cf.OpenOltAgentAddress)
 
 	printBanner()
 
@@ -98,7 +102,7 @@ func main() {
 
 	log.Infow("config", log.Fields{"config": *cf})
 
-	go cf.OpenOltManager.Start(cf)
+	go sc.openOltManager.Start(cf)
 
 	code := waitForExit()
 	log.Infow("received-a-closing-signal", log.Fields{"code": code})
