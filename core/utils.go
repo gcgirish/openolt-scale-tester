@@ -22,12 +22,21 @@ import (
 	"github.com/opencord/voltha-protos/v2/go/openolt"
 )
 
+var AttCtag map[uint32]uint32
+
 func init() {
 	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
+	AttCtag = make(map[uint32]uint32)
 }
 
 const (
 	vendorName = "ABCD"
+	// Number of bits for the physical UNI of the ONUs
+	bitsForUniID = 4
+	// Number of bits for the ONU ID
+	bitsForONUID = 8
+	//MaxOnusPerPon is Max number of ONUs on any PON port
+	MaxOnusPerPon = 1 << bitsForONUID
 )
 
 var vendorSpecificId = 1000
@@ -43,4 +52,48 @@ func GenerateNextONUSerialNumber() *openolt.SerialNumber {
 	// log.Infow("serial-num", log.Fields{"sn":sn})
 
 	return sn
+}
+
+//MkUniPortNum returns new UNIportNum based on intfID, inuID and uniID
+func MkUniPortNum(intfID, onuID, uniID uint32) uint32 {
+	var limit = int(onuID)
+	if limit > MaxOnusPerPon {
+		log.Warn("Warning: exceeded the MAX ONUS per PON")
+	}
+	return (intfID << (bitsForUniID + bitsForONUID)) | (onuID << bitsForUniID) | uniID
+}
+
+func GetAttCtag(ponIntf uint32) uint32 {
+	var currCtag uint32
+	var ok bool
+	if currCtag, ok = AttCtag[ponIntf]; !ok {
+		AttCtag[ponIntf] = 1
+	}
+	AttCtag[ponIntf] = currCtag + 1
+	return AttCtag[ponIntf]
+}
+
+func GetAttStag(ponIntf uint32) uint32 {
+	return ponIntf + 2
+}
+
+// TODO: More workflow support to be added here
+func GetCtag(workFlowName string, ponIntf uint32) uint32 {
+	switch workFlowName {
+	case "ATT":
+		return GetAttCtag(ponIntf)
+	default:
+		log.Errorw("unknown-workflowname", log.Fields{"workflow": workFlowName})
+	}
+	return 0
+}
+
+func GetStag(workFlowName string, ponIntf uint32) uint32 {
+	switch workFlowName {
+	case "ATT":
+		return GetAttStag(ponIntf)
+	default:
+		log.Errorw("unknown-workflowname", log.Fields{"workflow": workFlowName})
+	}
+	return 0
 }

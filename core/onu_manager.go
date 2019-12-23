@@ -49,9 +49,9 @@ func (onu *OnuDevice) Start(oltCh chan bool) {
 		subsName := onu.SerialNum + "-" + strconv.Itoa(int(subs))
 		subs := Subscriber{
 			SubscriberName: subsName,
-			UniPortNo:      0,
-			Ctag:           0,
-			Stag:           0,
+			UniPortNo:      MkUniPortNum(onu.PonIntf, onu.OnuID, uint32(subs)),
+			Ctag:           GetCtag(onu.testConfig.WorkflowName, onu.PonIntf),
+			Stag:           GetStag(onu.testConfig.WorkflowName, onu.PonIntf),
 			openOltClient:  onu.openOltClient,
 			testConfig:     onu.testConfig,
 			rsrMgr:         onu.rsrMgr,
