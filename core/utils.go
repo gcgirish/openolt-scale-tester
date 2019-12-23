@@ -16,14 +16,31 @@
 
 package core
 
-import "time"
+import (
+	"fmt"
+	"github.com/opencord/voltha-lib-go/v2/pkg/log"
+	"github.com/opencord/voltha-protos/v2/go/openolt"
+)
 
-type OnuDevice struct {
-	SerialNum             string    `json:"onuSerialNum"`
-	OnuID                 uint32    `json:"onuID"`
-	PonIntf               uint32    `json:"ponIntf"`
-	ProvisionStartTime    time.Time `json:"onuProvisionStartTime"`
-	ProvisionEndTime      time.Time `json:"onuProvisionEndTime"`
-	ProvisionDurationInMs int64     `json:"onuProvisionDurationInMilliSec"`
-	Reason                string    `json:"Reason"` // If provisioning failed, this specifies the reason.
+func init() {
+	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
+}
+
+const (
+	vendorName = "ABCD"
+)
+
+var vendorSpecificId = 1000
+
+func GenerateNextONUSerialNumber() *openolt.SerialNumber {
+
+	vi := []byte(vendorName)
+
+	vendorSpecificId += 1
+	vs := []byte(fmt.Sprint(vendorSpecificId))
+	// log.Infow("vendor-id-and-vendor-specific", log.Fields{"vi":vi, "vs":vs})
+	sn := &openolt.SerialNumber{VendorId: vi, VendorSpecific: vs}
+	// log.Infow("serial-num", log.Fields{"sn":sn})
+
+	return sn
 }

@@ -31,6 +31,7 @@ const (
 	defaultNumOfSubscribersPerOnu  = 1
 	defaultWorkFlowName            = "ATT"
 	defaultTimeIntervalBetweenSubs = 5 // in seconds
+	defaultNniIntfId               = 0
 )
 
 // OpenOltScaleTesterConfigConfig represents the set of configurations used by the read-write adaptercore service
@@ -39,6 +40,7 @@ type OpenOltScaleTesterConfig struct {
 	OpenOltAgentAddress     string
 	OpenOltAgentIP          string
 	OpenOltAgentPort        uint
+	NniIntfID               uint
 	NumOfOnu                uint
 	SubscribersPerOnu       uint
 	WorkflowName            string
@@ -57,6 +59,7 @@ func NewOpenOltScaleTesterConfig() *OpenOltScaleTesterConfig {
 		SubscribersPerOnu:       defaultNumOfSubscribersPerOnu,
 		WorkflowName:            defaultWorkFlowName,
 		TimeIntervalBetweenSubs: defaultTimeIntervalBetweenSubs,
+		NniIntfID:               defaultNniIntfId,
 	}
 	return &OpenOltScaleTesterConfig
 }
@@ -70,10 +73,13 @@ func (st *OpenOltScaleTesterConfig) ParseCommandArguments() {
 	help = fmt.Sprintf("OpenOLT Agent gRPC port")
 	flag.UintVar(&(st.OpenOltAgentPort), "openolt_agent_port", defaultOpenOltAgentPort, help)
 
+	help = fmt.Sprintf("OpenOLT Agent Nni Intf Id")
+	flag.UintVar(&(st.NniIntfID), "openolt_agent_nni_intf_id", defaultNniIntfId, help)
+
 	help = fmt.Sprintf("Number of ONU")
 	flag.UintVar(&(st.NumOfOnu), "num_of_onu", defaultNumOfOnu, help)
 
-	help = fmt.Sprintf("Kafka - Cluster messaging port")
+	help = fmt.Sprintf("Subscribers per ONU")
 	flag.UintVar(&(st.SubscribersPerOnu), "subscribers_per_onu", defaultNumOfSubscribersPerOnu, help)
 
 	help = fmt.Sprintf("Workflow name")
