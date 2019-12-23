@@ -16,14 +16,57 @@
 
 package core
 
-import "time"
+import (
+	"github.com/opencord/openolt-scale-tester/config"
+	oop "github.com/opencord/voltha-protos/v2/go/openolt"
+	"strconv"
+	"time"
+)
+
+type SubscriberKey struct {
+	SubscriberName string
+}
 
 type OnuDevice struct {
-	SerialNum             string    `json:"onuSerialNum"`
-	OnuID                 uint32    `json:"onuID"`
-	PonIntf               uint32    `json:"ponIntf"`
-	ProvisionStartTime    time.Time `json:"onuProvisionStartTime"`
-	ProvisionEndTime      time.Time `json:"onuProvisionEndTime"`
-	ProvisionDurationInMs int64     `json:"onuProvisionDurationInMilliSec"`
-	Reason                string    `json:"Reason"` // If provisioning failed, this specifies the reason.
+	SerialNum                string                        `json:"onuSerialNum"`
+	OnuID                    uint32                        `json:"onuID"`
+	PonIntf                  uint32                        `json:"ponIntf"`
+	OnuProvisionStartTime    time.Time                     `json:"onuProvisionStartTime"`
+	OnuProvisionEndTime      time.Time                     `json:"onuProvisionEndTime"`
+	OnuProvisionDurationInMs int64                         `json:"onuProvisionDurationInMilliSec"`
+	Reason                   string                        `json:"reason"` // If provisioning failed, this specifies the reason.
+	SubscriberMap            map[SubscriberKey]*Subscriber `json:"subscriberMap"`
+	openOltClient            oop.OpenoltClient
+	testConfig               *config.OpenOltScaleTesterConfig
+	rsrMgr                   *OpenOltResourceMgr
+}
+
+func (onu *OnuDevice) Start(oltCh chan bool) {
+	onu.SubscriberMap = make(map[SubscriberKey]*Subscriber)
+	onuCh := make(chan bool)
+	var subs uint
+	for subs = 0; subs < onu.testConfig.SubscribersPerOnu; subs++ {
+		subsName := onu.SerialNum + "-" + strconv.Itoa(int(subs))
+		subs := Subscriber{
+			SubscriberName: subsName,
+			UniPortNo:      0,
+			Ctag:           0,
+			Stag:           0,
+			openOltClient:  onu.openOltClient,
+			testConfig:     onu.testConfig,
+			rsrMgr:         onu.rsrMgr,
+		}
+		subsKey := SubscriberKey{subsName}
+		onu.SubscriberMap[subsKey] = &subs
+
+		// Start provisioning the subscriber
+		go subs.Start(onuCh)
+
+		// Wait for subscriber provision to complete
+		<-onuCh
+		//Sleep for configured interval before provisioning another subscriber
+		time.Sleep(time.Duration(onu.testConfig.TimeIntervalBetweenSubs))
+	}
+	// Indicate that the ONU provisioning is complete
+	oltCh <- true
 }

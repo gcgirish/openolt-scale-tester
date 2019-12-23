@@ -125,6 +125,7 @@ func (om *OpenOltManager) provisionONUs() {
 	var numOfONUsPerPon uint
 	var i, j, onuID uint32
 	var err error
+	oltChan := make(chan bool)
 	numOfONUsPerPon = om.testConfig.NumOfOnu / uint(om.deviceInfo.PonPorts)
 	if oddONUs := om.testConfig.NumOfOnu % uint(om.deviceInfo.PonPorts); oddONUs > 0 {
 		log.Warnw("Odd number ONUs left out of provisioning", log.Fields{"oddONUs": oddONUs})
@@ -134,14 +135,18 @@ func (om *OpenOltManager) provisionONUs() {
 			// TODO: More work with ONU provisioning
 			om.lockRsrAlloc.Lock()
 			sn := GenerateNextONUSerialNumber()
+			om.lockRsrAlloc.Unlock()
 			log.Debugw("provisioning onu", log.Fields{"onuID": j, "ponPort": i, "serialNum": sn})
 			if onuID, err = om.rsrMgr.GetONUID(i); err != nil {
 				log.Errorw("error getting onu id", log.Fields{"err": err})
-				om.lockRsrAlloc.Unlock()
 				continue
 			}
-			om.activateONU(i, onuID, sn, om.stringifySerialNumber(sn))
-			om.lockRsrAlloc.Unlock()
+			go om.activateONU(i, onuID, sn, om.stringifySerialNumber(sn), oltChan)
+			// Wait for complete ONU provision to succeed, including provisioning the subscriber
+			<-oltChan
+
+			// Sleep for configured time before provisioning next ONU
+			time.Sleep(time.Duration(om.testConfig.TimeIntervalBetweenSubs))
 		}
 	}
 
@@ -157,38 +162,55 @@ func (om *OpenOltManager) provisionONUs() {
 	*/
 }
 
-func (om *OpenOltManager) activateONU(intfID uint32, onuID uint32, serialNum *oop.SerialNumber, serialNumber string) {
+func (om *OpenOltManager) activateONU(intfID uint32, onuID uint32, serialNum *oop.SerialNumber, serialNumber string, oltCh chan bool) {
 	log.Debugw("activate-onu", log.Fields{"intfID": intfID, "onuID": onuID, "serialNum": serialNum, "serialNumber": serialNumber})
 	// TODO: need resource manager
 	var pir uint32 = 1000000
-	var onuDevice OnuDevice
+	var onuDevice = OnuDevice{
+		SerialNum:     serialNumber,
+		OnuID:         onuID,
+		PonIntf:       intfID,
+		openOltClient: om.openOltClient,
+		testConfig:    om.testConfig,
+		rsrMgr:        om.rsrMgr,
+	}
 	var err error
 	onuDeviceKey := OnuDeviceKey{onuID: onuID, ponInfID: intfID}
 	Onu := oop.Onu{IntfId: intfID, OnuId: onuID, SerialNumber: serialNum, Pir: pir}
 	now := time.Now()
 	nanos := now.UnixNano()
 	milliStart := nanos / 1000000
-	onuDevice.ProvisionStartTime = time.Unix(0, nanos)
+	onuDevice.OnuProvisionStartTime = time.Unix(0, nanos)
 	if _, err = om.openOltClient.ActivateOnu(context.Background(), &Onu); err != nil {
 		st, _ := status.FromError(err)
 		if st.Code() == codes.AlreadyExists {
 			log.Debug("ONU activation is in progress", log.Fields{"SerialNumber": serialNumber})
+			oltCh <- false
 		} else {
+			nanos = now.UnixNano()
+			milliEnd := nanos / 1000000
+			onuDevice.OnuProvisionEndTime = time.Unix(0, nanos)
+			onuDevice.OnuProvisionDurationInMs = milliEnd - milliStart
 			log.Errorw("activate-onu-failed", log.Fields{"Onu": Onu, "err ": err})
+			onuDevice.Reason = err.Error()
+			oltCh <- false
 		}
 	} else {
+		nanos = now.UnixNano()
+		milliEnd := nanos / 1000000
+		onuDevice.OnuProvisionEndTime = time.Unix(0, nanos)
+		onuDevice.OnuProvisionDurationInMs = milliEnd - milliStart
+		onuDevice.Reason = ReasonOk
 		log.Infow("activated-onu", log.Fields{"SerialNumber": serialNumber})
-	}
-	nanos = now.UnixNano()
-	milliEnd := nanos / 1000000
-	onuDevice.ProvisionEndTime = time.Unix(0, nanos)
-	onuDevice.ProvisionDurationInMs = milliEnd - milliStart
-	onuDevice.Reason = ReasonOk
-	if err != nil {
-		onuDevice.Reason = err.Error()
 	}
 
 	om.OnuDeviceMap[onuDeviceKey] = &onuDevice
+
+	// If ONU activation was success provision the ONU
+	if err != nil {
+		// start provisioning the ONU
+		go om.OnuDeviceMap[onuDeviceKey].Start(oltCh)
+	}
 }
 
 func (om *OpenOltManager) stringifySerialNumber(serialNum *oop.SerialNumber) string {
