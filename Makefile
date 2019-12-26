@@ -14,8 +14,11 @@
 # limitations under the License.
 #
 
+.PHONY: clean
+
 openolt-scale-tester:
+	make clean
 	go build .
 
 clean:
-	rm openolt-scale-tester
+	rm -f openolt-scale-tester

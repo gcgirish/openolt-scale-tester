@@ -24,6 +24,7 @@ import (
 	"github.com/cenkalti/backoff/v3"
 	"github.com/opencord/openolt-scale-tester/config"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
+	"github.com/opencord/voltha-lib-go/v2/pkg/techprofile"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -46,6 +47,7 @@ type OpenOltManager struct {
 	ipPort        string
 	deviceInfo    *oop.DeviceInfo
 	OnuDeviceMap  map[OnuDeviceKey]*OnuDevice `json:"onuDeviceMap"`
+	TechProfile map[uint32]*techprofile.TechProfileIf
 	clientConn    *grpc.ClientConn
 	openOltClient oop.OpenoltClient
 	testConfig    *config.OpenOltScaleTesterConfig
@@ -86,6 +88,12 @@ func (om *OpenOltManager) Start(testConfig *config.OpenOltScaleTesterConfig) err
 	if om.rsrMgr = NewResourceMgr("ABCD", "127.0.0.1:2379", "etcd", "openolt", om.deviceInfo); om.rsrMgr == nil {
 		log.Error("Error while instantiating resource manager")
 		return errors.New("instantiating resource manager failed")
+	}
+
+	om.TechProfile = make(map[uint32]*techprofile.TechProfileIf)
+	if err = om.populateTechProfilePerPonPort(); err != nil {
+		log.Error("Error while populating tech profile mgr\n")
+		return errors.New("error-loading-tech-profile-per-ponPort")
 	}
 
 	// Start reading indications
@@ -324,4 +332,25 @@ func (om *OpenOltManager) handleIndication(indication *oop.Indication) {
 		alarmInd := indication.GetAlarmInd()
 		log.Infow("Received alarm indication ", log.Fields{"AlarmInd": alarmInd})
 	}
+}
+
+
+func (om *OpenOltManager) populateTechProfilePerPonPort() error {
+	var tpCount int
+	for _, techRange := range om.deviceInfo.Ranges {
+		for _, intfID := range techRange.IntfIds {
+			om.TechProfile[intfID] = &(om.rsrMgr.ResourceMgrs[uint32(intfID)].TechProfileMgr)
+			tpCount++
+			log.Debugw("Init tech profile done", log.Fields{"intfID": intfID})
+		}
+	}
+	//Make sure we have as many tech_profiles as there are pon ports on the device
+	if tpCount != int(om.deviceInfo.GetPonPorts()) {
+		log.Errorw("Error while populating techprofile",
+			log.Fields{"numofTech": tpCount, "numPonPorts": om.deviceInfo.GetPonPorts()})
+		return errors.New("error while populating techprofile mgrs")
+	}
+	log.Infow("Populated techprofile for ponports successfully",
+		log.Fields{"numofTech": tpCount, "numPonPorts": om.deviceInfo.GetPonPorts()})
+	return nil
 }
