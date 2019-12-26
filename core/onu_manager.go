@@ -18,10 +18,15 @@ package core
 
 import (
 	"github.com/opencord/openolt-scale-tester/config"
+	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 	"strconv"
 	"time"
 )
+
+func init() {
+	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
+}
 
 type SubscriberKey struct {
 	SubscriberName string

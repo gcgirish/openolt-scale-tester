@@ -18,8 +18,14 @@ package core
 
 import (
 	"github.com/opencord/openolt-scale-tester/config"
+	"github.com/opencord/openolt-scale-tester/core/workflow"
+	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 )
+
+func init() {
+	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
+}
 
 type Subscriber struct {
 	SubscriberName string   `json:"subscriberName"`
@@ -29,12 +35,28 @@ type Subscriber struct {
 	GemPortIDs     []uint32 `json:"gemPortIds"`
 	AllocIDs       []uint32 `json:"allocIds"`
 	FlowIDs        []uint32 `json:"flowIds"`
-	openOltClient  oop.OpenoltClient
-	testConfig     *config.OpenOltScaleTesterConfig
-	rsrMgr         *OpenOltResourceMgr
+
+	FailedFlowCnt  uint32 `json:"failedFlowCnt"`
+	SuccessFlowCnt uint32 `json:"successFlowCnt"`
+
+	FailedSchedCnt  uint32 `json:"failedSchedCnt"`
+	SuccessSchedCnt uint32 `json:"successShedCnt"`
+
+	FailedQueueCnt  uint32 `json:"failedQueueCnt"`
+	SuccessQueueCnt uint32 `json:"successQueueCnt"`
+
+	FailedFlows  []oop.Flow             `json:"failedFlows"`
+	FailedScheds []oop.TrafficScheduler `json:"failedScheds"`
+	FailedQueues []oop.TrafficQueue     `json:"failedQueues"`
+
+	OpenOltClient oop.OpenoltClient
+	TestConfig    *config.OpenOltScaleTesterConfig
+	RsrMgr        *OpenOltResourceMgr
 }
 
 func (subs *Subscriber) Start(onuCh chan bool) {
+
+	workflow.DeployWorkflow(subs)
 
 	onuCh <- true
 }

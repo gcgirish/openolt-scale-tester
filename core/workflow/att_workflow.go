@@ -27,6 +27,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+
+func init() {
+	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
+}
+
+type AttWorkFlow struct {
+
+}
+
 func ProvisionAttNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *core.OpenOltResourceMgr) error {
 	var flowID []uint32
 	var err error
@@ -60,5 +69,35 @@ func ProvisionAttNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTe
 	}
 	log.Debugw("Flow added to device successfully ", log.Fields{"flow": flow})
 
+	return nil
+}
+
+func (att AttWorkFlow) ProvisionScheds(subs *core.Subscriber) error {
+	log.Info("provisioning-scheds")
+	return nil
+}
+
+func (att AttWorkFlow) ProvisionQueues(subs *core.Subscriber) error {
+	log.Info("provisioning-queues")
+	return nil
+}
+
+func (att AttWorkFlow) ProvisionEapFlow(subs *core.Subscriber) error {
+	log.Info("provisioning-eap")
+	return nil
+}
+
+func (att AttWorkFlow) ProvisionDhcpFlow(subs *core.Subscriber) error {
+	log.Info("provisioning-dhcp")
+	return nil
+}
+
+func (att AttWorkFlow) ProvisionIgmpFlow(subs *core.Subscriber) error {
+	log.Info("att-workflow-does-not-support-igmp-yet--nothing-to-do")
+	return nil
+}
+
+func (att AttWorkFlow) ProvisionHsiaFlow(subs *core.Subscriber) error {
+	log.Info("provisioning-hsia")
 	return nil
 }

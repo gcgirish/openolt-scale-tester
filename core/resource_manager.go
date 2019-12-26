@@ -28,6 +28,10 @@ import (
 	"github.com/opencord/voltha-protos/v2/go/openolt"
 )
 
+func init() {
+	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
+}
+
 // OpenOltResourceMgr holds resource related information as provided below for each field
 type OpenOltResourceMgr struct {
 	deviceInfo *openolt.DeviceInfo

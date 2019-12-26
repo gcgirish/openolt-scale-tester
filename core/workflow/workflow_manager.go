@@ -24,25 +24,45 @@ import (
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 )
 
+
+func init() {
+	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
+}
+
 type WorkFlow interface {
-	ProvisionScheds() error
-	ProvisionQueues() error
-	ProvisionNNiTrapFlow() error
-	ProvisionEapFlow() error
-	ProvisionDhcpFlow() error
-	ProvisionIgmpFlow() error
-	ProvisionHsiaFlow() error
+	ProvisionScheds(subs *core.Subscriber) error
+	ProvisionQueues(subs *core.Subscriber) error
+	ProvisionEapFlow(subs *core.Subscriber) error
+	ProvisionDhcpFlow(subs *core.Subscriber) error
+	ProvisionIgmpFlow(subs *core.Subscriber) error
+	ProvisionHsiaFlow(subs *core.Subscriber) error
 	// Add others here
 }
 
-func DeployWorkflow(wf WorkFlow) {
-	wf.ProvisionScheds()
-	wf.ProvisionQueues()
-	wf.ProvisionNNiTrapFlow()
-	wf.ProvisionEapFlow()
-	wf.ProvisionDhcpFlow()
-	wf.ProvisionIgmpFlow()
-	wf.ProvisionHsiaFlow()
+func DeployWorkflow(subs *core.Subscriber) {
+	var wf = getWorkFlow(subs)
+	if wf == nil {
+		log.Error("could-not-find-workflow")
+		return
+	}
+	// TODO: Catch and log errors
+	_ = wf.ProvisionScheds(subs)
+	_ = wf.ProvisionQueues(subs)
+	_ = wf.ProvisionEapFlow(subs)
+	_ = wf.ProvisionDhcpFlow(subs)
+	_ = wf.ProvisionIgmpFlow(subs)
+	_ = wf.ProvisionHsiaFlow(subs)
+}
+
+func getWorkFlow(subs *core.Subscriber) WorkFlow {
+	switch subs.TestConfig.WorkflowName {
+	case "ATT":
+		log.Info("chosen-att-workflow")
+		return AttWorkFlow{}
+	default:
+		log.Errorw("operator-workflow-not-supported-yet", log.Fields{"workflowName": subs.TestConfig.WorkflowName})
+	}
+	return nil
 }
 
 func ProvisionNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *core.OpenOltResourceMgr) error {
