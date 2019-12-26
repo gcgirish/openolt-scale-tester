@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package workflow
+package core
 
 import (
 	"github.com/opencord/openolt-scale-tester/config"
-	"github.com/opencord/openolt-scale-tester/core"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	"github.com/opencord/voltha-lib-go/v2/pkg/ponresourcemanager"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
@@ -35,7 +34,7 @@ func init() {
 type AttWorkFlow struct {
 }
 
-func ProvisionAttNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *core.OpenOltResourceMgr) error {
+func ProvisionAttNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *OpenOltResourceMgr) error {
 	var flowID []uint32
 	var err error
 
@@ -71,32 +70,32 @@ func ProvisionAttNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTe
 	return nil
 }
 
-func (att AttWorkFlow) ProvisionScheds(subs *core.Subscriber) error {
+func (att AttWorkFlow) ProvisionScheds(subs *Subscriber) error {
 	log.Info("provisioning-scheds")
 	return nil
 }
 
-func (att AttWorkFlow) ProvisionQueues(subs *core.Subscriber) error {
+func (att AttWorkFlow) ProvisionQueues(subs *Subscriber) error {
 	log.Info("provisioning-queues")
 	return nil
 }
 
-func (att AttWorkFlow) ProvisionEapFlow(subs *core.Subscriber) error {
+func (att AttWorkFlow) ProvisionEapFlow(subs *Subscriber) error {
 	log.Info("provisioning-eap")
 	return nil
 }
 
-func (att AttWorkFlow) ProvisionDhcpFlow(subs *core.Subscriber) error {
+func (att AttWorkFlow) ProvisionDhcpFlow(subs *Subscriber) error {
 	log.Info("provisioning-dhcp")
 	return nil
 }
 
-func (att AttWorkFlow) ProvisionIgmpFlow(subs *core.Subscriber) error {
+func (att AttWorkFlow) ProvisionIgmpFlow(subs *Subscriber) error {
 	log.Info("att-workflow-does-not-support-igmp-yet--nothing-to-do")
 	return nil
 }
 
-func (att AttWorkFlow) ProvisionHsiaFlow(subs *core.Subscriber) error {
+func (att AttWorkFlow) ProvisionHsiaFlow(subs *Subscriber) error {
 	log.Info("provisioning-hsia")
 	return nil
 }

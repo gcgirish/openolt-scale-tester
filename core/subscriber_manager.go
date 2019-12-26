@@ -18,7 +18,6 @@ package core
 
 import (
 	"github.com/opencord/openolt-scale-tester/config"
-	"github.com/opencord/openolt-scale-tester/core/workflow"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 )
@@ -56,7 +55,7 @@ type Subscriber struct {
 
 func (subs *Subscriber) Start(onuCh chan bool) {
 
-	workflow.DeployWorkflow(subs)
+	DeployWorkflow(subs)
 
 	onuCh <- true
 }

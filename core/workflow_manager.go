@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package workflow
+package core
 
 import (
 	"errors"
 	"github.com/opencord/openolt-scale-tester/config"
-	"github.com/opencord/openolt-scale-tester/core"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 )
@@ -29,16 +28,16 @@ func init() {
 }
 
 type WorkFlow interface {
-	ProvisionScheds(subs *core.Subscriber) error
-	ProvisionQueues(subs *core.Subscriber) error
-	ProvisionEapFlow(subs *core.Subscriber) error
-	ProvisionDhcpFlow(subs *core.Subscriber) error
-	ProvisionIgmpFlow(subs *core.Subscriber) error
-	ProvisionHsiaFlow(subs *core.Subscriber) error
+	ProvisionScheds(subs *Subscriber) error
+	ProvisionQueues(subs *Subscriber) error
+	ProvisionEapFlow(subs *Subscriber) error
+	ProvisionDhcpFlow(subs *Subscriber) error
+	ProvisionIgmpFlow(subs *Subscriber) error
+	ProvisionHsiaFlow(subs *Subscriber) error
 	// TODO: Add new items here as needed.
 }
 
-func DeployWorkflow(subs *core.Subscriber) {
+func DeployWorkflow(subs *Subscriber) {
 	var wf = getWorkFlow(subs)
 	if wf == nil {
 		log.Error("could-not-find-workflow")
@@ -53,7 +52,7 @@ func DeployWorkflow(subs *core.Subscriber) {
 	_ = wf.ProvisionHsiaFlow(subs)
 }
 
-func getWorkFlow(subs *core.Subscriber) WorkFlow {
+func getWorkFlow(subs *Subscriber) WorkFlow {
 	switch subs.TestConfig.WorkflowName {
 	case "ATT":
 		log.Info("chosen-att-workflow")
@@ -67,7 +66,7 @@ func getWorkFlow(subs *core.Subscriber) WorkFlow {
 
 // This function should get called even before provisioning an ONUs to install trap-from-nni flows.
 // The flows installed here are not related to any subscribers.
-func ProvisionNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *core.OpenOltResourceMgr) error {
+func ProvisionNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *OpenOltResourceMgr) error {
 	switch config.WorkflowName {
 	case "ATT":
 		if err := ProvisionAttNniTrapFlow(oo, config, rsrMgr); err != nil {

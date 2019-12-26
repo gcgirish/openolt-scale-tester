@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"github.com/cenkalti/backoff/v3"
 	"github.com/opencord/openolt-scale-tester/config"
-	"github.com/opencord/openolt-scale-tester/core/workflow"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 	"google.golang.org/grpc"
@@ -93,7 +92,7 @@ func (om *OpenOltManager) Start(testConfig *config.OpenOltScaleTesterConfig) err
 	go om.readIndications()
 
 	// Provision OLT NNI Trap flows as needed by the Workflow
-	if err = workflow.ProvisionNniTrapFlow(om.openOltClient, om.testConfig, om.rsrMgr); err != nil {
+	if err = ProvisionNniTrapFlow(om.openOltClient, om.testConfig, om.rsrMgr); err != nil {
 		log.Error("failed-to-add-nni-trap-flow", log.Fields{"err": err})
 	}
 

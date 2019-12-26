@@ -57,9 +57,9 @@ func (onu *OnuDevice) Start(oltCh chan bool) {
 			UniPortNo:      MkUniPortNum(onu.PonIntf, onu.OnuID, uint32(subs)),
 			Ctag:           GetCtag(onu.testConfig.WorkflowName, onu.PonIntf),
 			Stag:           GetStag(onu.testConfig.WorkflowName, onu.PonIntf),
-			openOltClient:  onu.openOltClient,
-			testConfig:     onu.testConfig,
-			rsrMgr:         onu.rsrMgr,
+			OpenOltClient:  onu.openOltClient,
+			TestConfig:     onu.testConfig,
+			RsrMgr:         onu.rsrMgr,
 		}
 		subsKey := SubscriberKey{subsName}
 		onu.SubscriberMap[subsKey] = &subs
