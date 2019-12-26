@@ -24,7 +24,6 @@ import (
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
 )
 
-
 func init() {
 	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
 }
@@ -36,7 +35,7 @@ type WorkFlow interface {
 	ProvisionDhcpFlow(subs *core.Subscriber) error
 	ProvisionIgmpFlow(subs *core.Subscriber) error
 	ProvisionHsiaFlow(subs *core.Subscriber) error
-	// Add others here
+	// TODO: Add new items here as needed.
 }
 
 func DeployWorkflow(subs *core.Subscriber) {
@@ -45,7 +44,7 @@ func DeployWorkflow(subs *core.Subscriber) {
 		log.Error("could-not-find-workflow")
 		return
 	}
-	// TODO: Catch and log errors
+	// TODO: Catch and log errors for below items if needed.
 	_ = wf.ProvisionScheds(subs)
 	_ = wf.ProvisionQueues(subs)
 	_ = wf.ProvisionEapFlow(subs)
@@ -59,12 +58,15 @@ func getWorkFlow(subs *core.Subscriber) WorkFlow {
 	case "ATT":
 		log.Info("chosen-att-workflow")
 		return AttWorkFlow{}
+	// TODO: Add new workflow here
 	default:
 		log.Errorw("operator-workflow-not-supported-yet", log.Fields{"workflowName": subs.TestConfig.WorkflowName})
 	}
 	return nil
 }
 
+// This function should get called even before provisioning an ONUs to install trap-from-nni flows.
+// The flows installed here are not related to any subscribers.
 func ProvisionNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *core.OpenOltResourceMgr) error {
 	switch config.WorkflowName {
 	case "ATT":
@@ -72,10 +74,10 @@ func ProvisionNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTeste
 			log.Error("error-installing-flow", log.Fields{"err": err})
 			return err
 		}
+	// TODO: Add new items here
 	default:
 		log.Errorw("operator-workflow-not-supported-yet", log.Fields{"workflowName": config.WorkflowName})
 		return errors.New("workflow-not-supported")
 	}
 	return nil
 }
-

@@ -27,13 +27,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-
 func init() {
 	_, _ = log.AddPackage(log.JSON, log.DebugLevel, nil)
 }
 
+// A dummy struct to comply with the WorkFlow interface.
 type AttWorkFlow struct {
-
 }
 
 func ProvisionAttNniTrapFlow(oo oop.OpenoltClient, config *config.OpenOltScaleTesterConfig, rsrMgr *core.OpenOltResourceMgr) error {
