@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/cenkalti/backoff/v3"
 	"github.com/opencord/openolt-scale-tester/config"
+	"github.com/opencord/voltha-lib-go/v2/pkg/db/kvstore"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	"github.com/opencord/voltha-lib-go/v2/pkg/techprofile"
 	oop "github.com/opencord/voltha-protos/v2/go/openolt"
@@ -33,8 +34,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"go.etcd.io/etcd/client"
-
 )
 
 const (
@@ -88,26 +87,20 @@ func (om *OpenOltManager) Start(testConfig *config.OpenOltScaleTesterConfig) err
 		return err
 	}
 
-	cfg := client.Config{
-		Endpoints:               []string{"http://127.0.0.1:2379"},
-		Transport:               client.DefaultTransport,
-		// set timeout per request to fail fast when the target endpoint is unavailable
-		HeaderTimeoutPerRequest: time.Second,
+	// Verify that etcd is up before starting the application.
+	etcdIpPort := "http://" + testConfig.KVStoreHost + ":" + strconv.Itoa(testConfig.KVStorePort)
+	client, err := kvstore.NewEtcdClient(etcdIpPort, 5)
+	if err != nil || client == nil {
+		log.Fatal("error-initializing-etcd-client")
+		return nil
 	}
-	c, err := client.New(cfg)
+	err = client.Put("/foo", "bar", 2)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("test-put-to-etcd-failed")
+		return nil
 	}
-	kapi := client.NewKeysAPI(c)
-	// set "/foo" key with "bar" value
-	log.Print("Setting '/foo' key with 'bar' value")
-	resp, err := kapi.Set(context.Background(), "/foo", "bar", nil)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		// print common key info
-		log.Printf("Set is done. Metadata is %q\n", resp)
-	}
+
+	log.Info("etcd-up-and-running")
 
 	if om.rsrMgr = NewResourceMgr("ABCD", om.testConfig.KVStoreHost+":"+strconv.Itoa(om.testConfig.KVStorePort),
 		"etcd", "openolt", om.deviceInfo); om.rsrMgr == nil {
