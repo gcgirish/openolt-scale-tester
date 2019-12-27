@@ -32,6 +32,8 @@ const (
 	defaultWorkFlowName            = "ATT"
 	defaultTimeIntervalBetweenSubs = 5 // in seconds
 	defaultNniIntfId               = 0
+	defaultKVstoreHost             = "192.168.1.11"
+	defaultKVstorePort             = 2379
 )
 
 // OpenOltScaleTesterConfigConfig represents the set of configurations used by the read-write adaptercore service
@@ -45,6 +47,8 @@ type OpenOltScaleTesterConfig struct {
 	SubscribersPerOnu       uint
 	WorkflowName            string
 	TimeIntervalBetweenSubs uint // in seconds
+	KVStoreHost             string
+	KVStorePort             int
 }
 
 func init() {
@@ -60,6 +64,8 @@ func NewOpenOltScaleTesterConfig() *OpenOltScaleTesterConfig {
 		WorkflowName:            defaultWorkFlowName,
 		TimeIntervalBetweenSubs: defaultTimeIntervalBetweenSubs,
 		NniIntfID:               defaultNniIntfId,
+		KVStoreHost:             defaultKVstoreHost,
+		KVStorePort:             defaultKVstorePort,
 	}
 	return &OpenOltScaleTesterConfig
 }
@@ -87,6 +93,12 @@ func (st *OpenOltScaleTesterConfig) ParseCommandArguments() {
 
 	help = fmt.Sprintf("Time Interval Between provisioning each subscriber")
 	flag.UintVar(&(st.TimeIntervalBetweenSubs), "time_interval_between_subs", defaultTimeIntervalBetweenSubs, help)
+
+	help = fmt.Sprintf("KV store host")
+	flag.StringVar(&(st.KVStoreHost), "kv_store_host", defaultKVstoreHost, help)
+
+	help = fmt.Sprintf("KV store port")
+	flag.IntVar(&(st.KVStorePort), "kv_store_port", defaultKVstorePort, help)
 
 	flag.Parse()
 

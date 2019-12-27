@@ -30,8 +30,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"io"
+	"strconv"
 	"sync"
 	"time"
+	"go.etcd.io/etcd/client"
+
 )
 
 const (
@@ -47,7 +50,7 @@ type OpenOltManager struct {
 	ipPort        string
 	deviceInfo    *oop.DeviceInfo
 	OnuDeviceMap  map[OnuDeviceKey]*OnuDevice `json:"onuDeviceMap"`
-	TechProfile map[uint32]*techprofile.TechProfileIf
+	TechProfile   map[uint32]*techprofile.TechProfileIf
 	clientConn    *grpc.ClientConn
 	openOltClient oop.OpenoltClient
 	testConfig    *config.OpenOltScaleTesterConfig
@@ -85,7 +88,29 @@ func (om *OpenOltManager) Start(testConfig *config.OpenOltScaleTesterConfig) err
 		return err
 	}
 
-	if om.rsrMgr = NewResourceMgr("ABCD", "127.0.0.1:2379", "etcd", "openolt", om.deviceInfo); om.rsrMgr == nil {
+	cfg := client.Config{
+		Endpoints:               []string{"http://127.0.0.1:2379"},
+		Transport:               client.DefaultTransport,
+		// set timeout per request to fail fast when the target endpoint is unavailable
+		HeaderTimeoutPerRequest: time.Second,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	kapi := client.NewKeysAPI(c)
+	// set "/foo" key with "bar" value
+	log.Print("Setting '/foo' key with 'bar' value")
+	resp, err := kapi.Set(context.Background(), "/foo", "bar", nil)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		// print common key info
+		log.Printf("Set is done. Metadata is %q\n", resp)
+	}
+
+	if om.rsrMgr = NewResourceMgr("ABCD", om.testConfig.KVStoreHost+":"+strconv.Itoa(om.testConfig.KVStorePort),
+		"etcd", "openolt", om.deviceInfo); om.rsrMgr == nil {
 		log.Error("Error while instantiating resource manager")
 		return errors.New("instantiating resource manager failed")
 	}
@@ -333,7 +358,6 @@ func (om *OpenOltManager) handleIndication(indication *oop.Indication) {
 		log.Infow("Received alarm indication ", log.Fields{"AlarmInd": alarmInd})
 	}
 }
-
 
 func (om *OpenOltManager) populateTechProfilePerPonPort() error {
 	var tpCount int

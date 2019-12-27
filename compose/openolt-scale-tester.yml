@@ -27,6 +27,15 @@ services:
     # TODO: Add command args here
     command: [
       "/app/openolt-scale-tester",
+      "--openolt_agent_ip_address=10.90.0.114",
+      "--openolt_agent_port=9191",
+      "--openolt_agent_nni_intf_id=0",
+      "--num_of_onu=128",
+      "--subscribers_per_onu=1",
+      "--workflow_name=ATT",
+      "--time_interval_between_subs=3",
+      "--kv_store_host=${DOCKER_HOST_IP}",
+      "--kv_store_port=2379"
     ]
     networks:
     - default
