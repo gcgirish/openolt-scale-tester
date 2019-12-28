@@ -19,6 +19,7 @@ package core
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/cenkalti/backoff/v3"
@@ -31,6 +32,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"io"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"sync"
 	"syscall"
@@ -38,7 +41,8 @@ import (
 )
 
 const (
-	ReasonOk = "OK"
+	ReasonOk          = "OK"
+	TechProfileKVPath = "service/voltha/technology_profiles/xgspon/%d" // service/voltha/technology_profiles/xgspon/<tech_profile_tableID>
 )
 
 type OnuDeviceKey struct {
@@ -71,6 +75,71 @@ func NewOpenOltManager(ipPort string) *OpenOltManager {
 	}
 }
 
+func (om *OpenOltManager) readAndLoadTPsToEtcd() {
+	var byteValue []byte
+	var err error
+	// Verify that etcd is up before starting the application.
+	etcdIpPort := "http://" + om.testConfig.KVStoreHost + ":" + strconv.Itoa(om.testConfig.KVStorePort)
+	client, err := kvstore.NewEtcdClient(etcdIpPort, 5)
+	if err != nil || client == nil {
+		log.Fatal("error-initializing-etcd-client")
+		return
+	}
+
+	// Load TPs to etcd for each of the specified tech-profiles
+	for _, tpID := range om.testConfig.TpIDList {
+		// Below should translate to something like "/app/ATT-64.json"
+		// The TP file should exist.
+		tpFilePath := "/app/" + om.testConfig.WorkflowName + "-" + strconv.Itoa(tpID) + ".json"
+		// Open our jsonFile - TODO - Remove ATT.json hardcoding
+		jsonFile, err := os.Open(tpFilePath)
+		// if we os.Open returns an error then handle it
+		if err != nil {
+			log.Fatalw("could-not-find-tech-profile", log.Fields{"err": err, "tpFile": tpFilePath})
+		}
+		log.Debugw("tp-file-opened-successfully", log.Fields{"tpFile": tpFilePath})
+
+		// read our opened json file as a byte array.
+		if byteValue, err = ioutil.ReadAll(jsonFile); err != nil {
+			log.Fatalw("could-not-read-tp-file", log.Fields{"err": err, "tpFile": tpFilePath})
+		}
+
+		// we initialize our Users array
+		var tp techprofile.TechProfile
+
+		// we unmarshal our byteArray which contains our
+		// jsonFile's content into 'users' which we defined above
+		if err = json.Unmarshal(byteValue, &tp); err != nil {
+			log.Fatalw("could-not-unmarshal-tp", log.Fields{"err": err, "tpFile": tpFilePath})
+		} else {
+			log.Infow("tp-read-from-file", log.Fields{"tp": tp, "tpFile": tpFilePath})
+		}
+		kvPath := fmt.Sprintf(TechProfileKVPath, tpID)
+		tpJson, err := json.Marshal(tp)
+		err = client.Put(kvPath, tpJson, 2)
+		if err != nil {
+			log.Fatalw("tp-put-to-etcd-failed", log.Fields{"tpPath": kvPath, "err": err})
+		}
+		// verify the PUT succeeded.
+		kvResult, err := client.Get(kvPath, 2)
+		if kvResult == nil {
+			log.Fatal("tp-not-found-on-kv-after-load", log.Fields{"key": kvPath, "err": err})
+		} else {
+			var KvTpIns techprofile.TechProfile
+			var resPtr *techprofile.TechProfile = &KvTpIns
+			if value, err := kvstore.ToByte(kvResult.Value); err == nil {
+				if err = json.Unmarshal(value, resPtr); err != nil {
+					log.Fatal("error-unmarshal-kv-result", log.Fields{"err": err, "key": kvPath, "value": value})
+				} else {
+					log.Infow("verified-ok-that-tp-load-was-good", log.Fields{"tpID": tpID, "kvPath": kvPath})
+					_ = jsonFile.Close()
+					continue
+				}
+			}
+		}
+	}
+}
+
 func (om *OpenOltManager) Start(testConfig *config.OpenOltScaleTesterConfig) error {
 	var err error
 	om.testConfig = testConfig
@@ -88,20 +157,10 @@ func (om *OpenOltManager) Start(testConfig *config.OpenOltScaleTesterConfig) err
 		return err
 	}
 
-	// Verify that etcd is up before starting the application.
-	etcdIpPort := "http://" + testConfig.KVStoreHost + ":" + strconv.Itoa(testConfig.KVStorePort)
-	client, err := kvstore.NewEtcdClient(etcdIpPort, 5)
-	if err != nil || client == nil {
-		log.Fatal("error-initializing-etcd-client")
-		return nil
-	}
-	err = client.Put("/foo", "bar", 2)
-	if err != nil {
-		log.Fatal("test-put-to-etcd-failed")
-		return nil
-	}
+	// Read and load TPs to etcd.
+	om.readAndLoadTPsToEtcd()
 
-	log.Info("etcd-up-and-running")
+	log.Info("etcd-up-and-running--tp-loaded-successfully")
 
 	if om.rsrMgr = NewResourceMgr("ABCD", om.testConfig.KVStoreHost+":"+strconv.Itoa(om.testConfig.KVStorePort),
 		"etcd", "openolt", om.deviceInfo); om.rsrMgr == nil {

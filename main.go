@@ -82,6 +82,8 @@ func main() {
 	sc := OpenOltScaleTester{}
 	cf := config.NewOpenOltScaleTesterConfig()
 	cf.ParseCommandArguments()
+	// Generate TP ID List from TP ID string parsed from command line for a given subscriber
+	cf.TpIDList = config.GetTpIDList(cf.TpIDsString)
 	sc.openOltManager = core.NewOpenOltManager(cf.OpenOltAgentAddress)
 
 	printBanner()

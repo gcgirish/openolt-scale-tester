@@ -39,3 +39,4 @@ WORKDIR /app
 
 # Copy required files
 COPY --from=build-env /go/bin/openolt-scale-tester /app/
+COPY --from=build-env /go/src/tech-profiles /app/

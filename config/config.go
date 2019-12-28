@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/opencord/voltha-lib-go/v2/pkg/log"
 	"strconv"
+	"strings"
 )
 
 // Open OLT default constants
@@ -34,6 +35,7 @@ const (
 	defaultNniIntfId               = 0
 	defaultKVstoreHost             = "192.168.1.11"
 	defaultKVstorePort             = 2379
+	defaultTpIDs                   = "64"
 )
 
 // OpenOltScaleTesterConfigConfig represents the set of configurations used by the read-write adaptercore service
@@ -49,10 +51,24 @@ type OpenOltScaleTesterConfig struct {
 	TimeIntervalBetweenSubs uint // in seconds
 	KVStoreHost             string
 	KVStorePort             int
+	TpIDsString             string
+	TpIDList                []int
 }
 
 func init() {
 	_, _ = log.AddPackage(log.JSON, log.WarnLevel, nil)
+}
+
+func GetTpIDList(tpIDsStr string) []int {
+	stringSlice := strings.Split(tpIDsStr, ",")
+	var tpIDSlice []int
+	for _, s := range stringSlice {
+		if tpID, err := strconv.Atoi(s); err == nil {
+			tpIDSlice = append(tpIDSlice, tpID)
+		}
+	}
+	log.Debugw("parsed-tp-id-slice", log.Fields{"tpIDSlice": tpIDSlice})
+	return tpIDSlice
 }
 
 // NewOpenOltScaleTesterConfig returns a new RWCore config
@@ -66,6 +82,7 @@ func NewOpenOltScaleTesterConfig() *OpenOltScaleTesterConfig {
 		NniIntfID:               defaultNniIntfId,
 		KVStoreHost:             defaultKVstoreHost,
 		KVStorePort:             defaultKVstorePort,
+		TpIDList:                GetTpIDList(defaultTpIDs),
 	}
 	return &OpenOltScaleTesterConfig
 }
@@ -99,6 +116,9 @@ func (st *OpenOltScaleTesterConfig) ParseCommandArguments() {
 
 	help = fmt.Sprintf("KV store port")
 	flag.IntVar(&(st.KVStorePort), "kv_store_port", defaultKVstorePort, help)
+
+	help = fmt.Sprintf("Command seperated TP ID list for Workflow")
+	flag.StringVar(&(st.TpIDsString), "tp_ids", defaultTpIDs, help)
 
 	flag.Parse()
 
