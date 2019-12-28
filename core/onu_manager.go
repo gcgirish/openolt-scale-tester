@@ -50,6 +50,9 @@ func (onu *OnuDevice) Start(oltCh chan bool) {
 	onu.SubscriberMap = make(map[SubscriberKey]*Subscriber)
 	onuCh := make(chan bool)
 	var subs uint
+
+	log.Infow("onu-provision-started-from-onu-manager", log.Fields{"onuID": onu.OnuID, "ponIntf": onu.PonIntf})
+
 	for subs = 0; subs < onu.testConfig.SubscribersPerOnu; subs++ {
 		subsName := onu.SerialNum + "-" + strconv.Itoa(int(subs))
 		subs := Subscriber{
@@ -64,14 +67,20 @@ func (onu *OnuDevice) Start(oltCh chan bool) {
 		subsKey := SubscriberKey{subsName}
 		onu.SubscriberMap[subsKey] = &subs
 
+		log.Infow("subscriber-provision-started-from-onu-manager", log.Fields{"subsName": subsName})
 		// Start provisioning the subscriber
 		go subs.Start(onuCh)
 
 		// Wait for subscriber provision to complete
 		<-onuCh
+
+		log.Infow("subscriber-provision-completed-from-onu-manager", log.Fields{"subsName": subsName})
+
 		//Sleep for configured interval before provisioning another subscriber
 		time.Sleep(time.Duration(onu.testConfig.TimeIntervalBetweenSubs))
 	}
 	// Indicate that the ONU provisioning is complete
 	oltCh <- true
+
+	log.Infow("onu-provision-completed-from-onu-manager", log.Fields{"onuID": onu.OnuID, "ponIntf": onu.PonIntf})
 }

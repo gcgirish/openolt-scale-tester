@@ -33,6 +33,7 @@ import (
 	"io"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -156,6 +157,11 @@ func (om *OpenOltManager) provisionONUs() {
 	if oddONUs := om.testConfig.NumOfOnu % uint(om.deviceInfo.PonPorts); oddONUs > 0 {
 		log.Warnw("Odd number ONUs left out of provisioning", log.Fields{"oddONUs": oddONUs})
 	}
+	totalOnusToProvision := numOfONUsPerPon * uint(om.deviceInfo.PonPorts)
+	log.Infow("***** all-onu-provision-started ******",
+		log.Fields{"totalNumOnus": totalOnusToProvision,
+			"numOfOnusPerPon": numOfONUsPerPon,
+			"numOfPons":       om.deviceInfo.PonPorts})
 	for i = 0; i < om.deviceInfo.PonPorts; i++ {
 		for j = 0; j < uint32(numOfONUsPerPon); j++ {
 			// TODO: More work with ONU provisioning
@@ -167,14 +173,17 @@ func (om *OpenOltManager) provisionONUs() {
 				log.Errorw("error getting onu id", log.Fields{"err": err})
 				continue
 			}
+			log.Infow("onu-provision-started-from-olt-manager", log.Fields{"onuId": onuID, "ponIntf": i})
 			go om.activateONU(i, onuID, sn, om.stringifySerialNumber(sn), oltChan)
 			// Wait for complete ONU provision to succeed, including provisioning the subscriber
 			<-oltChan
+			log.Infow("onu-provision-completed-from-olt-manager", log.Fields{"onuId": onuID, "ponIntf": i})
 
 			// Sleep for configured time before provisioning next ONU
 			time.Sleep(time.Duration(om.testConfig.TimeIntervalBetweenSubs))
 		}
 	}
+	log.Info("******** all-onu-provisioning-completed *******")
 
 	// TODO: We need to dump the results at the end. But below json marshall does not work
 	// We will need custom Marshal function.
@@ -186,6 +195,9 @@ func (om *OpenOltManager) provisionONUs() {
 		}
 		fmt.Println(string(e))
 	*/
+
+	// Stop the process once the job is done
+	_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 }
 
 func (om *OpenOltManager) activateONU(intfID uint32, onuID uint32, serialNum *oop.SerialNumber, serialNumber string, oltCh chan bool) {
@@ -233,7 +245,7 @@ func (om *OpenOltManager) activateONU(intfID uint32, onuID uint32, serialNum *oo
 	om.OnuDeviceMap[onuDeviceKey] = &onuDevice
 
 	// If ONU activation was success provision the ONU
-	if err != nil {
+	if err == nil {
 		// start provisioning the ONU
 		go om.OnuDeviceMap[onuDeviceKey].Start(oltCh)
 	}

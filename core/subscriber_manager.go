@@ -55,7 +55,11 @@ type Subscriber struct {
 
 func (subs *Subscriber) Start(onuCh chan bool) {
 
+	log.Infow("workflow-deploy-started-for-subscriber", log.Fields{"subsName": subs.SubscriberName})
+
 	DeployWorkflow(subs)
+
+	log.Infow("workflow-deploy-completed-for-subscriber", log.Fields{"subsName": subs.SubscriberName})
 
 	onuCh <- true
 }
