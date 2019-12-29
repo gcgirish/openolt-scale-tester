@@ -42,7 +42,7 @@ import (
 
 const (
 	ReasonOk          = "OK"
-	TechProfileKVPath = "service/voltha/technology_profiles/xgspon/%d" // service/voltha/technology_profiles/xgspon/<tech_profile_tableID>
+	TechProfileKVPath = "service/voltha/technology_profiles/%s/%d" // service/voltha/technology_profiles/xgspon/<tech_profile_tableID>
 )
 
 type OnuDeviceKey struct {
@@ -91,7 +91,7 @@ func (om *OpenOltManager) readAndLoadTPsToEtcd() {
 		// Below should translate to something like "/app/ATT-64.json"
 		// The TP file should exist.
 		tpFilePath := "/app/" + om.testConfig.WorkflowName + "-" + strconv.Itoa(tpID) + ".json"
-		// Open our jsonFile - TODO - Remove ATT.json hardcoding
+		// Open our jsonFile
 		jsonFile, err := os.Open(tpFilePath)
 		// if we os.Open returns an error then handle it
 		if err != nil {
@@ -104,17 +104,14 @@ func (om *OpenOltManager) readAndLoadTPsToEtcd() {
 			log.Fatalw("could-not-read-tp-file", log.Fields{"err": err, "tpFile": tpFilePath})
 		}
 
-		// we initialize our Users array
 		var tp techprofile.TechProfile
 
-		// we unmarshal our byteArray which contains our
-		// jsonFile's content into 'users' which we defined above
 		if err = json.Unmarshal(byteValue, &tp); err != nil {
 			log.Fatalw("could-not-unmarshal-tp", log.Fields{"err": err, "tpFile": tpFilePath})
 		} else {
 			log.Infow("tp-read-from-file", log.Fields{"tp": tp, "tpFile": tpFilePath})
 		}
-		kvPath := fmt.Sprintf(TechProfileKVPath, tpID)
+		kvPath := fmt.Sprintf(TechProfileKVPath, om.deviceInfo.Technology, tpID)
 		tpJson, err := json.Marshal(tp)
 		err = client.Put(kvPath, tpJson, 2)
 		if err != nil {
@@ -126,7 +123,7 @@ func (om *OpenOltManager) readAndLoadTPsToEtcd() {
 			log.Fatal("tp-not-found-on-kv-after-load", log.Fields{"key": kvPath, "err": err})
 		} else {
 			var KvTpIns techprofile.TechProfile
-			var resPtr *techprofile.TechProfile = &KvTpIns
+			var resPtr = &KvTpIns
 			if value, err := kvstore.ToByte(kvResult.Value); err == nil {
 				if err = json.Unmarshal(value, resPtr); err != nil {
 					log.Fatal("error-unmarshal-kv-result", log.Fields{"err": err, "key": kvPath, "value": value})
@@ -427,7 +424,7 @@ func (om *OpenOltManager) populateTechProfilePerPonPort() error {
 	var tpCount int
 	for _, techRange := range om.deviceInfo.Ranges {
 		for _, intfID := range techRange.IntfIds {
-			om.TechProfile[intfID] = &(om.rsrMgr.ResourceMgrs[uint32(intfID)].TechProfileMgr)
+			om.TechProfile[intfID] = &(om.rsrMgr.ResourceMgrs[intfID].TechProfileMgr)
 			tpCount++
 			log.Debugw("Init tech profile done", log.Fields{"intfID": intfID})
 		}

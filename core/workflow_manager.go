@@ -39,17 +39,39 @@ type WorkFlow interface {
 
 func DeployWorkflow(subs *Subscriber) {
 	var wf = getWorkFlow(subs)
-	if wf == nil {
-		log.Error("could-not-find-workflow")
+
+	// TODO: Catch and log errors for below items if needed.
+	if err := wf.ProvisionScheds(subs); err != nil {
+		subs.Reason = err.Error()
 		return
 	}
-	// TODO: Catch and log errors for below items if needed.
-	_ = wf.ProvisionScheds(subs)
-	_ = wf.ProvisionQueues(subs)
-	_ = wf.ProvisionEapFlow(subs)
-	_ = wf.ProvisionDhcpFlow(subs)
-	_ = wf.ProvisionIgmpFlow(subs)
-	_ = wf.ProvisionHsiaFlow(subs)
+
+	if err := wf.ProvisionQueues(subs); err != nil {
+		subs.Reason = err.Error()
+		return
+	}
+
+	if err := wf.ProvisionEapFlow(subs); err != nil {
+		subs.Reason = err.Error()
+		return
+	}
+
+	if err := wf.ProvisionDhcpFlow(subs); err != nil {
+		subs.Reason = err.Error()
+		return
+	}
+
+	if err := wf.ProvisionIgmpFlow(subs); err != nil {
+		subs.Reason = err.Error()
+		return
+	}
+
+	if err := wf.ProvisionHsiaFlow(subs); err != nil {
+		subs.Reason = err.Error()
+		return
+	}
+
+	subs.Reason = ReasonCodeToReasonString(SUBSCRIBER_PROVISION_SUCCESS)
 }
 
 func getWorkFlow(subs *Subscriber) WorkFlow {

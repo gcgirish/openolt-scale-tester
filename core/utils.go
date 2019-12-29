@@ -67,13 +67,16 @@ func GetAttCtag(ponIntf uint32) uint32 {
 	var currCtag uint32
 	var ok bool
 	if currCtag, ok = AttCtag[ponIntf]; !ok {
-		AttCtag[ponIntf] = 1
+		// Start with ctag 2
+		AttCtag[ponIntf] = 2
+		return AttCtag[ponIntf]
 	}
 	AttCtag[ponIntf] = currCtag + 1
 	return AttCtag[ponIntf]
 }
 
 func GetAttStag(ponIntf uint32) uint32 {
+	// start with stag 2
 	return ponIntf + 2
 }
 
